@@ -1,13 +1,12 @@
 from rest_framework import generics, filters, status
 from django_filters import rest_framework as django_filters
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view
-from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import AllowAny  # Allow access to all users
 
 from .models import MenuItem
 from .serializers import MenuItemSerializer
@@ -31,17 +30,17 @@ class MenuItemView(generics.ListCreateAPIView):
     search_fields = ['title']
     ordering_fields = ['title', 'price', 'inventory']
     ordering = ['title']
-    permission_classes = [IsAuthenticated]  # Enforce authentication
+    permission_classes = [AllowAny]  # Allow access to all users
 
 # View for retrieving, updating, and deleting a single menu item
 class SingleMenuItemView(generics.RetrieveUpdateDestroyAPIView):
     queryset = MenuItem.objects.all()
     serializer_class = MenuItemSerializer
-    permission_classes = [IsAuthenticated]  # Enforce authentication
+    permission_classes = [AllowAny]  # Allow access to all users
 
 # View for searching menu items
 class MenuItemSearchView(APIView):
-    permission_classes = [IsAuthenticated]  # Enforce authentication
+    permission_classes = [AllowAny]  # Allow access to all users
 
     def get(self, request, *args, **kwargs):
         title = request.query_params.get('title', None)
@@ -71,3 +70,26 @@ class MenuItemSearchView(APIView):
         # If no pagination applied (fallback), serialize and return the full queryset
         serializer = MenuItemSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+# View for checking if a user is a manager
+@api_view(['GET'])
+def manager_view(request):
+    return Response({'message': 'Okay, you can see this.'})
+
+from rest_framework import generics
+from django.contrib.auth.models import User
+from rest_framework.permissions import IsAdminUser
+from rest_framework.response import Response
+from rest_framework import status
+
+# LittleLemonAPI/views.py
+
+from rest_framework import generics
+from rest_framework.permissions import IsAdminUser
+from django.contrib.auth.models import User
+from .serializers import UserDeleteSerializer
+
+class UserDeleteView(generics.DestroyAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserDeleteSerializer
+    permission_classes = [IsAdminUser]  # Ensure only admins can delete users
